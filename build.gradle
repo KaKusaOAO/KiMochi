@@ -1,0 +1,58 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group 'com.kakaouo'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://libraries.minecraft.net'
+    }
+}
+
+dependencies {
+    // StringTemplate
+    implementation 'org.antlr:ST4:4.3.4'
+
+    // JLine
+    implementation 'org.jline:jline:+'
+
+    // Kotlin Coroutines / Sync
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-Beta'
+
+    // SLF4J
+    implementation 'org.slf4j:slf4j-api:+'
+
+    // JSON path
+    implementation 'com.nfeld.jsonpathkt:jsonpathkt:+'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:+'
+
+    // Mojang's Brigadier
+    implementation 'com.mojang:brigadier:1.0.18'
+
+    // JNA
+    implementation 'net.java.dev.jna:jna:5.12.1'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/octocat/hello-world"
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+}
