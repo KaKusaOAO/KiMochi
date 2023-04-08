@@ -7,7 +7,6 @@ import com.kakaouo.mochi.texts.TextColor;
 import com.kakaouo.mochi.texts.TranslateText;
 import com.kakaouo.mochi.utils.Logger;
 import com.kakaouo.mochi.utils.Utils;
-import com.nfeld.jsonpathkt.JsonPath;
 import org.stringtemplate.v4.ST;
 import java.io.File;
 import java.io.IOException;
@@ -36,8 +35,7 @@ public class I18n {
         }
     }
 
-    private I18n parent;
-    private String currentLocale = null;
+    private final I18n parent;
     private JsonNode locale = null;
 
     public I18n(Locale locale) {
@@ -71,7 +69,6 @@ public class I18n {
     }
 
     public void setLocale(String locale) {
-        currentLocale = locale;
         if (isNullOrEmpty(locale)) return;
         this.locale = getLocaleJson(locale);
     }

@@ -1,7 +1,6 @@
 package com.kakaouo.mochi.texts;
 
 import com.kakaouo.mochi.utils.RGBColor;
-import com.kakaouo.mochi.utils.RGBColor;
 
 import java.util.HashMap;
 import java.util.Map;
