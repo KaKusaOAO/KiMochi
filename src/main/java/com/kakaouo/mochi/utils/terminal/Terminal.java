@@ -4,7 +4,6 @@ import com.kakaouo.mochi.texts.Text;
 import org.jline.reader.Completer;
 import org.jline.reader.Highlighter;
 import org.jline.reader.LineReaderBuilder;
-import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
 import java.io.IOException;
