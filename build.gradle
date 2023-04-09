@@ -50,8 +50,8 @@ publishing {
             name = "GitHubPackages"
             url = "https://maven.pkg.github.com/KaKusaOAO/KiMochi"
             credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
+                username = getProperty("github.actor") ?: System.getenv("GITHUB_ACTOR")
+                password = getProperty("github.token") ?: System.getenv("GITHUB_TOKEN")
             }
         }
     }
