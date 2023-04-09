@@ -73,13 +73,18 @@ public class I18n {
         this.locale = getLocaleJson(locale);
     }
 
+    protected String resolvePath(JsonNode node, String path) {
+        // Not supported on Java for now
+        return null;
+    }
+
     public final String getOrNull(String key) {
         return Optional.ofNullable(locale)
             .flatMap(l -> Optional.ofNullable(l.get(key))
                 .map(JsonNode::textValue)
                 .or(() ->
                     Optional.ofNullable(
-                        JsonPathHelper.INSTANCE.readString(l, "$." + key)
+                        this.resolvePath(l, "$." + key)
                     )
                 )
             )
@@ -91,7 +96,7 @@ public class I18n {
                     .map(JsonNode::textValue)
                     .or(() ->
                         Optional.ofNullable(
-                            JsonPathHelper.INSTANCE.readString(b, "$." + key)
+                            this.resolvePath(b, "$." + key)
                         )
                     )
                 )
