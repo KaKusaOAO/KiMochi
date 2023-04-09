@@ -68,12 +68,12 @@ public class I18n {
         }
     }
 
-    public void setLocale(String locale) {
+    public final void setLocale(String locale) {
         if (isNullOrEmpty(locale)) return;
         this.locale = getLocaleJson(locale);
     }
 
-    public String getOrNull(String key) {
+    public final String getOrNull(String key) {
         return Optional.ofNullable(locale)
             .flatMap(l -> Optional.ofNullable(l.get(key))
                 .map(JsonNode::textValue)
@@ -115,11 +115,11 @@ public class I18n {
         return key;
     }
 
-    public String of(String key) {
+    public final String of(String key) {
         return of(key, (Map<String, Object>) null);
     }
 
-    public String of(String key, Map<String, Object> placeholders) {
+    public final String of(String key, Map<String, Object> placeholders) {
         Map<String, Object> map = placeholders == null ?
             new HashMap<>() :
             new HashMap<>(placeholders);
@@ -137,7 +137,7 @@ public class I18n {
 
     }
 
-    public String of(String key, IPlaceholder... placeholders) {
+    public final String of(String key, IPlaceholder... placeholders) {
         var map = new HashMap<String, Object>();
         for (var p : placeholders) {
             p.writePlaceholders(map);
