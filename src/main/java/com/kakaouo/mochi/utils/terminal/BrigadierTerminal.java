@@ -1,6 +1,7 @@
 package com.kakaouo.mochi.utils.terminal;
 
 import com.kakaouo.mochi.texts.LiteralText;
+import com.kakaouo.mochi.texts.Text;
 import com.kakaouo.mochi.texts.TextColor;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.ParsedCommandNode;
@@ -28,8 +29,22 @@ public enum BrigadierTerminal {
             } catch (InterruptedException | ExecutionException e) {
                 suggestions = Stream.of();
             }
-            candidates.addAll(suggestions.map(Candidate::new).toList());
+
+            int index = input.lastIndexOf(' ') + 1;
+            candidates.addAll(suggestions.map(c -> new Candidate(c.substring(index))).toList());
         };
+    }
+
+    private static void writeWithSuggestion(Text<?> text, StringBuilder sb) {
+        sb.append(text.toAnsi());
+    }
+
+    private static void writeError(String msg, StringBuilder sb) {
+        sb.append(LiteralText.of(msg).setColor(TextColor.RED).toAnsi());
+    }
+
+    private static void writeUsage(String msg, StringBuilder sb) {
+        sb.append(LiteralText.of(msg).setColor(TextColor.DARK_GRAY).toAnsi());
     }
 
     public static <T> Highlighter createHighlighter(CommandDispatcher<T> dispatcher, T source) {
@@ -44,11 +59,17 @@ public enum BrigadierTerminal {
                 var result = dispatcher.parse(buffer, source);
                 var reader = result.getReader();
                 var context = result.getContext();
-                ParsedCommandNode<T> lastProcessedNode = null;
+                var sb = new StringBuilder();
 
+                if (reader.canRead()) {
+                    if (context.getRange().isEmpty()) {
+                        writeWithSuggestion(LiteralText.of(buffer).setColor(TextColor.RED), sb);
+                    }
+                }
+
+                ParsedCommandNode<T> lastProcessedNode = null;
                 var started = false;
                 var startFrom = 0;
-                var sb = new StringBuilder();
 
                 /*
                 fun writeWithSuggestion(text: com.kakaouo.mochi.texts.Text<*>) {
@@ -80,8 +101,9 @@ public enum BrigadierTerminal {
                             started = true;
                             lastProcessedNode = node;
                         } catch (Throwable ex) {
-                            sb.append(LiteralText.of(buffer.substring(range.getStart(), range.getEnd()))
-                                .setColor(TextColor.RED));
+                            writeWithSuggestion(LiteralText.of(buffer.substring(range.getStart(), range.getEnd()))
+                                .setColor(TextColor.RED), sb);
+                            writeError(ex.getMessage(), sb);
                             return AttributedString.fromAnsi(sb.toString());
                         }
                     }
@@ -89,14 +111,14 @@ public enum BrigadierTerminal {
                     var child = context.getChild();
                     if (child == null && reader.canRead()) {
                         var nodes = context.getNodes();
-                        var last = nodes.get(nodes.size() - 1);
-                        var nextNode = last.getNode().getChildren().stream().findFirst().orElse(null);
+                        var last = nodes.isEmpty() ? null : nodes.get(nodes.size() - 1);
+                        var nextNode = last == null ? null : last.getNode().getChildren().stream().findFirst().orElse(null);
                         var usage = (nextNode instanceof ArgumentCommandNode<T, ?>) ? nextNode.getUsageText() : null;
 
-                        sb.append(LiteralText.of(reader.getString().substring(startFrom))
-                            .setColor(TextColor.RED));
+                        writeWithSuggestion(LiteralText.of(reader.getString().substring(startFrom))
+                                .setColor(TextColor.RED), sb);
                         if (usage != null) {
-                            sb.append(LiteralText.of(" :$usage").setColor(TextColor.GRAY).toAnsi());
+                            writeUsage(" :" + usage, sb);
                         }
 
                         var errMsg = "Incorrect argument";
@@ -105,7 +127,7 @@ public enum BrigadierTerminal {
                             errMsg = err.values().stream().findFirst().get().getMessage();
                         }
 
-                        sb.append(LiteralText.of(" <- $errMsg").setColor(TextColor.RED).toAnsi());
+                        writeError(" <- " + errMsg, sb);
                         return AttributedString.fromAnsi(sb.toString());
                     }
 

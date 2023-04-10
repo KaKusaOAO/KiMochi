@@ -1,11 +1,9 @@
 package com.kakaouo.mochi.utils.terminal;
 
 import com.kakaouo.mochi.texts.Text;
-import org.jline.reader.Completer;
-import org.jline.reader.Highlighter;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.*;
 import org.jline.reader.impl.DefaultParser;
+import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.TerminalBuilder;
 
 import java.io.IOException;
@@ -19,6 +17,7 @@ public enum Terminal {
     private static LineReader reader = null;
     private static Semaphore lock = new Semaphore(1);
     private static Semaphore readLock = new Semaphore(1);
+    private static History history = new DefaultHistory();
 
     static {
         var builder = TerminalBuilder.builder();
@@ -33,6 +32,9 @@ public enum Terminal {
         writeLine(text.toAnsi());
     }
 
+    public static org.jline.terminal.Terminal getTerminal() {
+        return terminal;
+    }
 
     public static void writeLine(String text) {
         try {
@@ -54,10 +56,12 @@ public enum Terminal {
             readLock.acquire();
             reader = LineReaderBuilder.builder()
                 .parser(new DefaultParser())
+                .history(history)
                 .highlighter(highlighter)
                 .completer(completer)
                 .terminal(terminal)
                 .build();
+            reader.setAutosuggestion(LineReader.SuggestionType.COMPLETER);
 
             var p = Optional.ofNullable(prompt).map(Text::toAnsi).orElse(null);
             var line = reader.readLine(p);
