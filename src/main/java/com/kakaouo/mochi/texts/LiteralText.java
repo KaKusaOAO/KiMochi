@@ -1,5 +1,7 @@
 package com.kakaouo.mochi.texts;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Optional;
 
 public class LiteralText extends Text<LiteralText> {
@@ -14,24 +16,24 @@ public class LiteralText extends Text<LiteralText> {
     }
 
     @Override
-    protected LiteralText resolveThis() {
+    protected @NotNull LiteralText resolveThis() {
         return this;
     }
 
     @Override
-    protected LiteralText createCopy() {
+    protected @NotNull LiteralText createCopy() {
         return new LiteralText(text);
     }
 
     @Override
-    public String toPlainText() {
+    public @NotNull String toPlainText() {
         return text + super.toPlainText();
     }
 
     @Override
-    public String toAscii() {
+    public @NotNull String toAscii() {
         var extra = super.toAscii();
-        var color = Optional.ofNullable(this.color).orElse(this.getParentColor()).toAsciiCode();
+        var color = Optional.ofNullable(this.getColor()).orElse(this.getParentColor()).toAsciiCode();
         return color + text + extra;
     }
 }

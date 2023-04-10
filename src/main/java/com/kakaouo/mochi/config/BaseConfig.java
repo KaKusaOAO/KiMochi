@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-public abstract class BaseConfig<T extends IBaseConfigData> {
+public abstract class BaseConfig<T> {
     private final Class<T> clz;
     private final File file;
     private T data;
@@ -39,6 +39,10 @@ public abstract class BaseConfig<T extends IBaseConfigData> {
                 //
             }
         }
+    }
+
+    public File getFile() {
+        return file;
     }
 
     public void load() {

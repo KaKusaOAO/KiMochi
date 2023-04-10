@@ -1,25 +1,130 @@
 package com.kakaouo.mochi.texts;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 public abstract class Text<T extends Text<T>> {
     public List<Text<?>> extra = new ArrayList<>();
-    public Text<?> parent = null;
-    public TextColor color = null;
-    public boolean bold = false;
-    public boolean italic = false;
-    public boolean obfuscated = false;
-    public boolean underlined = false;
-    public boolean strikethrough = false;
-    public boolean reset = false;
+    private Text<?> parent = null;
+    private TextColor color = null;
+    private boolean bold = false;
+    private boolean italic = false;
+    private boolean obfuscated = false;
+    private boolean underlined = false;
+    private boolean strikethrough = false;
+    private boolean reset = false;
 
-    public TextColor getParentColor() {
-        if (parent == null) return TextColor.WHITE;
-        return Optional.ofNullable(parent.color).orElse(parent.getParentColor());
+    @NotNull
+    @Contract("_->this")
+    public T setBold(boolean flag) {
+        bold = flag;
+        return this.resolveThis();
     }
 
+    public boolean isBold() {
+        return bold;
+    }
+
+    @Nullable
+    public TextColor getColor() {
+        return color;
+    }
+
+    public boolean isItalic() {
+        return italic;
+    }
+
+    public boolean isObfuscated() {
+        return obfuscated;
+    }
+
+    public boolean isReset() {
+        return reset;
+    }
+
+    public boolean isStrikethrough() {
+        return strikethrough;
+    }
+
+    public boolean isUnderlined() {
+        return underlined;
+    }
+
+    @NotNull
+    public List<Text<?>> getExtra() {
+        return Collections.unmodifiableList(extra);
+    }
+
+    @NotNull
+    public Text<?> getParent() {
+        return parent;
+    }
+
+    @NotNull
+    @Contract("null->fail;!null->this")
+    public T setExtra(List<Text<?>> extra) {
+        if (extra == null) {
+           throw new IllegalArgumentException("extra cannot be null.");
+        }
+
+        this.extra = extra;
+        return this.resolveThis();
+    }
+
+    @NotNull
+    @Contract("_->this")
+    public T setItalic(boolean italic) {
+        this.italic = italic;
+        return this.resolveThis();
+    }
+
+    @NotNull
+    @Contract("_->this")
+    public T setObfuscated(boolean obfuscated) {
+        this.obfuscated = obfuscated;
+        return this.resolveThis();
+    }
+
+    @NotNull
+    @Contract("_->this")
+    public T setReset(boolean reset) {
+        this.reset = reset;
+        return this.resolveThis();
+    }
+
+    @NotNull
+    @Contract("_->this")
+    public T setStrikethrough(boolean strikethrough) {
+        this.strikethrough = strikethrough;
+        return this.resolveThis();
+    }
+
+    @NotNull
+    @Contract("_->this")
+    public T setUnderlined(boolean underlined) {
+        this.underlined = underlined;
+        return this.resolveThis();
+    }
+
+    @NotNull
+    public TextColor getParentColor() {
+        return Optional.ofNullable(parent)
+            .flatMap(p ->
+                Optional.ofNullable(p.color)
+                    .or(() ->
+                        Optional.of(p.getParentColor())
+                    )
+            )
+            .orElse(TextColor.WHITE);
+    }
+
+    @NotNull
     public String toAscii() {
         StringBuilder extra = new StringBuilder();
         for (Text<?> e : this.extra) {
@@ -29,6 +134,7 @@ public abstract class Text<T extends Text<T>> {
         return extra.append(this.getParentColor().toAsciiCode()).toString();
     }
 
+    @NotNull
     public String toPlainText() {
         StringBuilder extra = new StringBuilder();
         for (Text<?> e : this.extra) {
@@ -37,6 +143,8 @@ public abstract class Text<T extends Text<T>> {
         return extra.toString();
     }
 
+    @NotNull
+    @Contract("_,_->new")
     public static <T> Text<?> representClass(Class<T> clz, TextColor color) {
         String name = clz == null ? "?" : clz.getTypeName().substring(clz.getPackageName().length() + 1);
         String pack = clz == null ? "?" : clz.getPackageName();
@@ -46,28 +154,54 @@ public abstract class Text<T extends Text<T>> {
                         .setColor(TextColor.DARK_GRAY));
     }
 
+    @NotNull
+    @Contract("_->new")
     public static <T> Text<?> representClass(Class<T> clz) {
         return Text.representClass(clz, null);
     }
 
+    @NotNull
+    @Contract("->this")
     protected abstract T resolveThis();
 
+    @NotNull
+    @Contract("_->this")
     public T setColor(TextColor color) {
         this.color = color;
         return this.resolveThis();
     }
 
-    public T addExtra(Text<?> text) {
+    @NotNull
+    @Contract("null,_->fail;_,null->fail;!null,!null->this")
+    public T addExtra(Text<?> text, Text<?>... more) {
+        if (text == null) {
+            throw new IllegalArgumentException("text cannot be null");
+        }
+
+        text.parent = this;
         this.extra.add(text);
+
+        for (var t : more) {
+            if (t == null) {
+                throw new IllegalArgumentException("One of the given texts is null");
+            }
+
+            t.parent = this;
+            this.extra.add(t);
+        }
+
         return this.resolveThis();
     }
 
+    @NotNull
     protected abstract T createCopy();
 
+    @NotNull
+    @Contract("->new")
     public T copy() {
         T clone = this.createCopy();
-        clone.color = this.color;
-        clone.extra = new ArrayList<>(this.extra);
+        clone.setColor(this.color);
+        clone.setExtra(new ArrayList<>(this.extra));
         return clone;
     }
 }

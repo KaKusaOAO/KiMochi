@@ -7,6 +7,7 @@ import com.kakaouo.mochi.texts.TextColor;
 import com.kakaouo.mochi.texts.TranslateText;
 import com.kakaouo.mochi.utils.Logger;
 import com.kakaouo.mochi.utils.Utils;
+import org.jetbrains.annotations.NotNull;
 import org.stringtemplate.v4.ST;
 import java.io.File;
 import java.io.IOException;
@@ -59,13 +60,18 @@ public class I18n {
     // Sometimes we need custom locale as well
     public I18n(String locale, I18n parent) {
         if (parent == null && !(isNullOrEmpty(locale) || locale.equals(BASE_NAME))) {
-            parent = new I18n();
+            parent = createEmpty();
         }
         this.parent = parent;
 
         if (!isNullOrEmpty(locale)) {
             setLocale(locale);
         }
+    }
+
+    @NotNull
+    protected I18n createEmpty() {
+        return new I18n();
     }
 
     public final void setLocale(String locale) {
@@ -75,7 +81,7 @@ public class I18n {
 
     protected String resolvePath(JsonNode node, String path) {
         // Not supported on Java for now
-        return null;
+        return JsonPathHelper.INSTANCE.resolvePath(node, path);
     }
 
     public final String getOrNull(String key) {

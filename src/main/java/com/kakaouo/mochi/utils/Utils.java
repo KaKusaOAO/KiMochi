@@ -35,7 +35,8 @@ public enum Utils {
             return dir;
         } else {
             // Return the current path
-            return new File("");
+            var dir = new File("");
+            return dir.getAbsoluteFile();
         }
     }
 

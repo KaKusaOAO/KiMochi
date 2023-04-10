@@ -1,10 +1,14 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
+
 plugins {
+    id 'org.jetbrains.kotlin.jvm' version '+'
     id 'java-library'
     id 'maven-publish'
 }
 
 group 'com.kakaouo'
-version '1.0-SNAPSHOT'
+version '1.0-build.21'
 
 repositories {
     mavenCentral()
@@ -39,6 +43,13 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
 }
+
+tasks
+    .withType(KotlinCompilationTask.class)
+    .configureEach {
+        compilerOptions.languageVersion
+            = KotlinVersion.KOTLIN_2_0
+    }
 
 test {
     useJUnitPlatform()

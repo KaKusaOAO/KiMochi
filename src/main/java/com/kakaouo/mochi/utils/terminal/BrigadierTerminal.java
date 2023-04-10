@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 public enum BrigadierTerminal {
     ;
 
-    public <T> Completer createCompleter(CommandDispatcher<T> dispatcher, T source) {
+    public static <T> Completer createCompleter(CommandDispatcher<T> dispatcher, T source) {
         return (reader, line, candidates) -> {
             var input = line.line();
             var result = dispatcher.parse(input, source);
@@ -34,7 +34,7 @@ public enum BrigadierTerminal {
         };
     }
 
-    public <T> Highlighter createHighlighter(CommandDispatcher<T> dispatcher, T source) {
+    public static <T> Highlighter createHighlighter(CommandDispatcher<T> dispatcher, T source) {
         return new Highlighter() {
             @Override
             public AttributedString highlight(LineReader lineReader, String buffer){

@@ -68,7 +68,7 @@ object UtilsKt {
         }
 
         while (!completed) {
-            // delay(16)
+            delay(16)
             yield()
         }
 
@@ -77,7 +77,7 @@ object UtilsKt {
         }
     }
 
-    suspend fun <T> CompletableFuture<T>.toCoroutine(): T? {
+    suspend fun <T> CompletableFuture<T>.await(): T? {
         var completed = false
         var faulted = false
         var result: T? = null
@@ -93,7 +93,7 @@ object UtilsKt {
         }
 
         while (!completed) {
-            // delay(16)
+            delay(16)
             yield()
         }
 

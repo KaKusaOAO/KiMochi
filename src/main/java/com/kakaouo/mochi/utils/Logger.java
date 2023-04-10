@@ -14,6 +14,7 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public enum Logger {
     ;
@@ -31,7 +32,8 @@ public enum Logger {
     private static final Semaphore lock = new Semaphore(1);
     private static final List<AsyncLogListener> listeners = new ArrayList<>();
     private static boolean bootstrapped = false;
-    private static Thread thread = null;
+    private static boolean isShutdown = false;
+    private static volatile Thread thread = null;
     private static final Queue<Runnable> queue = new ConcurrentLinkedQueue<>();
 
     private static TranslateText createPrefixFormat() {
@@ -59,11 +61,44 @@ public enum Logger {
     }
 
     private static void runEventLoop() {
-        while (bootstrapped) {
-            while (queue.isEmpty()) {
-                Thread.onSpinWait();
+        while (!isShutdown) {
+            try {
+                while (queue.isEmpty() && !isShutdown) {
+                    Thread.sleep(16);
+                    Thread.yield();
+                }
+
+                pollEvents();
+                Thread.yield();
+            } catch (Throwable ex) {
+                System.out.println(ex.getMessage());
+                System.out.println(ex);
             }
         }
+    }
+
+    public static void runManualPoll() {
+        if (bootstrapped) return;
+        bootstrapped = true;
+        thread = Thread.currentThread();
+    }
+
+    public static void runBlocking() {
+        runManualPoll();
+        runEventLoop();
+    }
+
+    static {
+        var shutdownHook = new Thread(() -> {
+            flush();
+            isShutdown = true;
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
     public static void pollEvents() {
@@ -90,9 +125,10 @@ public enum Logger {
         try {
             lock.acquire();
             getDefaultFormatteedLines(entry, true).forEach(Terminal::writeLine);
-            lock.release();
         } catch (InterruptedException e) {
             //
+        } finally {
+            lock.release();
         }
 
         return CompletableFuture.completedFuture(null);
@@ -100,6 +136,75 @@ public enum Logger {
 
     private static void catchHandlerException(AsyncLogListener listener, Throwable ex) {
 
+    }
+
+    private static void callOrQueue(Runnable runnable) {
+        if (!bootstrapped) {
+            runThreaded();
+            while (thread == null) {
+                try {
+                    Thread.sleep(16);
+                } catch (InterruptedException e) {
+                    //
+                }
+                Thread.yield();
+            }
+
+            var entry = new Entry(
+                Level.WARN,
+                LiteralText.of("*** Logger is not bootstrapped. ***"),
+                Text.representClass(Logger.class),
+                TextColor.GOLD,
+                thread,
+                Instant.now()
+            );
+            internalOnLogged(entry);
+
+            entry = new Entry(
+                Level.WARN,
+                LiteralText.of("Logger now requires either runThreaded(), runBlocking() or runManualPoll() to poll log events."),
+                Text.representClass(Logger.class),
+                TextColor.GOLD,
+                thread,
+                Instant.now()
+            );
+            internalOnLogged(entry);
+
+            entry = new Entry(
+                Level.WARN,
+                LiteralText.of("The threaded approach will be used by default."),
+                Text.representClass(Logger.class),
+                TextColor.GOLD,
+                thread,
+                Instant.now()
+            );
+            internalOnLogged(entry);
+        }
+        if (!bootstrapped) {
+            throw new RuntimeException("Logger is not bootstrapped.");
+        }
+
+        if (Thread.currentThread() != thread) {
+            queue.add(runnable);
+        } else {
+            runnable.run();
+        }
+    }
+
+    public static void flush() {
+        var called = new AtomicBoolean(false);
+        callOrQueue(() -> {
+            called.set(true);
+        });
+
+        while (!called.get()) {
+            try {
+                Thread.sleep(16);
+            } catch (InterruptedException e) {
+                //
+            }
+            Thread.yield();
+        }
     }
 
     private static void internalOnLogged(Entry entry) {
@@ -135,7 +240,8 @@ public enum Logger {
     public static List<String> getDefaultFormatteedLines(Entry entry, boolean ascii) {
         var name = entry.tag.copy();
         var f = createPrefixFormat();
-        name.color = entry.color;
+        var thread = entry.thread;
+        name.setColor(entry.color);
 
         var tag = LiteralText
             .of(String.format("[%s@%s] ", thread.getName(), thread.getId()))
@@ -148,11 +254,11 @@ public enum Logger {
 
         var now = new SimpleDateFormat().format(new Date());
         var t = entry.text.copy();
-        var prefix = f.addWith(tag, entry.text.copy(), LiteralText.of(now));
+        var prefix = f.addWith(tag, LiteralText.of(""), LiteralText.of(now));
 
         var pPlain = prefix.toPlainText();
         var pf = ascii ? prefix.toAscii() : pPlain;
-        var content = ascii ? entry.text.toAscii() : entry.text.toPlainText();
+        var content = ascii ? t.toAscii() : t.toPlainText();
         var lines = content.split("\n");
 
         var remainPrefixPlain = "+ ->> ";
@@ -177,9 +283,10 @@ public enum Logger {
         try {
             lock.acquire();
             getDefaultFormatteedLines(entry, true).forEach(System.out::println);
-            lock.release();
         } catch (InterruptedException e) {
             //
+        } finally {
+            lock.release();
         }
 
         return CompletableFuture.completedFuture(null);
@@ -213,7 +320,7 @@ public enum Logger {
 
     private static void log(Level level, TextColor color, Text<?> name, Text<?> text) {
         var entry = new Entry(level, text, name, color, Thread.currentThread(), Instant.now());
-        listeners.forEach(listener -> listener.invoke(entry));
+        callOrQueue(() -> internalOnLogged(entry));
     }
 
     public static void verbose(Object text, Object tag) {
