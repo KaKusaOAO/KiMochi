@@ -54,26 +54,4 @@ object UtilsKt {
 
         return future
     }
-
-    @JvmName("toVoidCoroutine")
-    suspend fun CompletableFuture<Void>.toCoroutune() {
-        var completed = false
-        var faulted = false
-        var err: Throwable? = null
-
-        this.whenComplete { _, e ->
-            faulted = e != null
-            err = e
-            completed = true
-        }
-
-        while (!completed) {
-            delay(16)
-            yield()
-        }
-
-        if (faulted) {
-            throw err!!
-        }
-    }
 }

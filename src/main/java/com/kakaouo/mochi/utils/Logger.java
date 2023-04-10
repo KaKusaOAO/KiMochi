@@ -7,10 +7,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
@@ -252,13 +249,13 @@ public enum Logger {
                     .setColor(entry.color)
             );
 
-        var now = new SimpleDateFormat().format(new Date());
+        var now = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.US).format(new Date());
         var t = entry.text.copy();
         var prefix = f.addWith(tag, LiteralText.of(""), LiteralText.of(now));
 
         var pPlain = prefix.toPlainText();
-        var pf = ascii ? prefix.toAscii() : pPlain;
-        var content = ascii ? t.toAscii() : t.toPlainText();
+        var pf = ascii ? prefix.toAnsi() : pPlain;
+        var content = ascii ? t.toAnsi() : t.toPlainText();
         var lines = content.split("\n");
 
         var remainPrefixPlain = "+ ->> ";

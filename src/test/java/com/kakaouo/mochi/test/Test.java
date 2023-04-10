@@ -1,6 +1,7 @@
 package com.kakaouo.mochi.test;
 
 import com.kakaouo.mochi.texts.LiteralText;
+import com.kakaouo.mochi.utils.Logger;
 import com.kakaouo.mochi.utils.terminal.BrigadierTerminal;
 import com.kakaouo.mochi.utils.terminal.Terminal;
 import com.mojang.brigadier.CommandDispatcher;
@@ -16,6 +17,9 @@ import static com.mojang.brigadier.builder.RequiredArgumentBuilder.argument;
 public class Test {
 
     public static void main(String[] args) {
+        Logger.addLogListener(Logger::logToEmulatedTerminalAsync);
+        Logger.runThreaded();
+
         var timerThread = new Thread(Test::timerThread);
         timerThread.start();
 
@@ -25,12 +29,12 @@ public class Test {
                 .then(argument("value", IntegerArgumentType.integer())
                     .executes(ctx -> {
                         var i = ctx.getArgument("value", Integer.class);
-                        Terminal.writeLine("Foo bar with " + i + "!");
+                        Logger.info("Foo bar with " + i + "!");
                         return 1;
                     })
                 )
                 .executes(ctx -> {
-                    Terminal.writeLine("Foo bar!");
+                    Logger.info("Foo bar!");
                     return 1;
                 })
             )
@@ -46,7 +50,7 @@ public class Test {
             try {
                 dispatcher.execute(line, source);
             } catch (CommandSyntaxException e) {
-                Terminal.writeLine("Error!");
+                Logger.error("Error!");
             }
         }
     }
@@ -60,7 +64,7 @@ public class Test {
                 i++;
 
                 var j = new Random().nextInt(100);
-                Terminal.writeLine("Random! " + j + " (" + i + ")");
+                Logger.warn(LiteralText.of("Random! " + j + " (" + i + ")"));
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

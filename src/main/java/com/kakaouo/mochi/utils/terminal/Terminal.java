@@ -30,7 +30,7 @@ public enum Terminal {
     }
 
     public static void writeLine(Text<?> text) {
-        writeLine(text.toAscii());
+        writeLine(text.toAnsi());
     }
 
 
@@ -59,7 +59,7 @@ public enum Terminal {
                 .terminal(terminal)
                 .build();
 
-            var p = Optional.ofNullable(prompt).map(Text::toAscii).orElse(null);
+            var p = Optional.ofNullable(prompt).map(Text::toAnsi).orElse(null);
             var line = reader.readLine(p);
             reader = null;
 

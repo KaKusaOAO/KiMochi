@@ -2,6 +2,8 @@ package com.kakaouo.mochi.texts;
 
 import com.kakaouo.mochi.utils.RGBColor;
 import com.kakaouo.mochi.utils.RGBColor;
+import org.jline.utils.AttributedStringBuilder;
+import org.jline.utils.AttributedStyle;
 
 public class RgbAsciiColor implements IAsciiColor {
     private RGBColor color;

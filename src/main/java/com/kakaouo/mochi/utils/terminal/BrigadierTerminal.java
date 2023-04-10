@@ -1,7 +1,6 @@
 package com.kakaouo.mochi.utils.terminal;
 
 import com.kakaouo.mochi.texts.LiteralText;
-import com.kakaouo.mochi.texts.Text;
 import com.kakaouo.mochi.texts.TextColor;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.ParsedCommandNode;
@@ -9,9 +8,8 @@ import com.mojang.brigadier.tree.ArgumentCommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import org.jline.reader.*;
 import org.jline.utils.AttributedString;
-import java.lang.Exception;
+
 import java.lang.StringBuilder;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -76,7 +74,7 @@ public enum BrigadierTerminal {
 
                             var useColor = !(node.getNode() instanceof LiteralCommandNode<T>);
                             var text = LiteralText.of(range.get(reader)).setColor(useColor ? colors[colorIndex++] : null);
-                            sb.append(text.toAscii());
+                            sb.append(text.toAnsi());
 
                             colorIndex %= colors.length;
                             started = true;
@@ -98,7 +96,7 @@ public enum BrigadierTerminal {
                         sb.append(LiteralText.of(reader.getString().substring(startFrom))
                             .setColor(TextColor.RED));
                         if (usage != null) {
-                            sb.append(LiteralText.of(" :$usage").setColor(TextColor.GRAY).toAscii());
+                            sb.append(LiteralText.of(" :$usage").setColor(TextColor.GRAY).toAnsi());
                         }
 
                         var errMsg = "Incorrect argument";
@@ -107,7 +105,7 @@ public enum BrigadierTerminal {
                             errMsg = err.values().stream().findFirst().get().getMessage();
                         }
 
-                        sb.append(LiteralText.of(" <- $errMsg").setColor(TextColor.RED).toAscii());
+                        sb.append(LiteralText.of(" <- $errMsg").setColor(TextColor.RED).toAnsi());
                         return AttributedString.fromAnsi(sb.toString());
                     }
 
@@ -115,7 +113,7 @@ public enum BrigadierTerminal {
                 }
 
                 if (lastProcessedNode != null && lastProcessedNode.getNode().getCommand() == null) {
-                    sb.append(LiteralText.of(" <- Incomplete command").setColor(TextColor.RED).toAscii());
+                    sb.append(LiteralText.of(" <- Incomplete command").setColor(TextColor.RED).toAnsi());
                 }
 
                 return AttributedString.fromAnsi(sb.toString());

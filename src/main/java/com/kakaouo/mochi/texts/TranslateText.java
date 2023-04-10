@@ -1,15 +1,17 @@
 package com.kakaouo.mochi.texts;
 
+import com.kakaouo.mochi.utils.terminal.Terminal;
 import org.jetbrains.annotations.NotNull;
+import org.jline.utils.AttributedStringBuilder;
+import org.jline.utils.AttributedStyle;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.regex.Pattern;
 
 public class TranslateText extends Text<TranslateText> {
     public String translate;
     public List<Text<?>> with = new ArrayList<>();
+    private static final Pattern REPLACE_PATTERN = Pattern.compile("%(?:(\\d)\\$)?s");
 
     public static TranslateText of(String translate) {
         return new TranslateText(translate);
@@ -39,11 +41,59 @@ public class TranslateText extends Text<TranslateText> {
     }
 
     @Override
-    public @NotNull String toAscii() {
-        String extra = super.toAscii();
-        String color = Optional.ofNullable(this.getColor()).orElse(this.getParentColor()).toAsciiCode();
-        Object[] args = with.stream().map(text -> text.toAscii() + color).toArray(Object[]::new);
-        return color + String.format(translate, args) + extra;
+    public @NotNull String toAnsi() {
+        String extra = super.toAnsi();
+        List<Text<?>> converted = new ArrayList<>();
+        List<Text<?>> literals = new ArrayList<>();
+
+        int start = 0;
+        int counter = 0;
+        var matcher = REPLACE_PATTERN.matcher(translate);
+
+        try {
+            while (matcher.find()) {
+                // Add the previous text to converted text
+                String prev = translate.substring(start, matcher.start());
+                var tempLiteral = LiteralText.of(prev).setColor(getColor());
+                literals.add(tempLiteral);
+                converted.add(tempLiteral);
+                start = matcher.end();
+
+                int index;
+                String indexStr = matcher.group(1);
+                if (indexStr != null) {
+                    index = Integer.parseInt(indexStr) - 1;
+                } else {
+                    index = counter++;
+                }
+
+                converted.add(with.get(index));
+            }
+
+            var end = LiteralText.of(translate.substring(start))
+                .setColor(getColor());
+            converted.add(end);
+            literals.add(end);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        AttributedStyle style = new AttributedStyle().foregroundRgb(
+            Optional.ofNullable(this.getColor()).orElse(this.getParentColor()).getColor().getRGB()
+        );
+
+        AttributedStringBuilder builder = new AttributedStringBuilder()
+            .style(style);
+
+        for (var text : converted) {
+            if (literals.contains(text)) {
+                builder.style(style);
+            }
+
+            builder.append(text.toAnsi())
+                .style(style);
+        }
+        return builder.append(extra).toAnsi();
     }
 
     @Override

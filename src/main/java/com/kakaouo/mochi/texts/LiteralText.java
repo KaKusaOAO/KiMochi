@@ -1,6 +1,8 @@
 package com.kakaouo.mochi.texts;
 
 import org.jetbrains.annotations.NotNull;
+import org.jline.utils.AttributedStringBuilder;
+import org.jline.utils.AttributedStyle;
 
 import java.util.Optional;
 
@@ -31,9 +33,16 @@ public class LiteralText extends Text<LiteralText> {
     }
 
     @Override
-    public @NotNull String toAscii() {
-        var extra = super.toAscii();
-        var color = Optional.ofNullable(this.getColor()).orElse(this.getParentColor()).toAsciiCode();
-        return color + text + extra;
+    public @NotNull String toAnsi() {
+        var extra = super.toAnsi();
+
+        var color = Optional.ofNullable(this.getColor()).orElse(this.getParentColor()).getColor();
+        var style = new AttributedStyle()
+            .foregroundRgb(color.getRGB());
+
+        return new AttributedStringBuilder()
+            .style(style)
+            .append(text)
+            .append(extra).toAnsi();
     }
 }

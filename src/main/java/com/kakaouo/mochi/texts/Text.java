@@ -3,6 +3,8 @@ package com.kakaouo.mochi.texts;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jline.utils.AttributedStringBuilder;
+import org.jline.utils.AttributedStyle;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -125,13 +127,22 @@ public abstract class Text<T extends Text<T>> {
     }
 
     @NotNull
-    public String toAscii() {
-        StringBuilder extra = new StringBuilder();
+    public String toAnsi() {
+        var color = this.getParentColor().getColor();
+        AttributedStyle style = new AttributedStyle().foregroundRgb(color.getRGB());
+
+        AttributedStringBuilder builder = new AttributedStringBuilder();
         for (Text<?> e : this.extra) {
-            extra.append(e.toAscii());
-            extra.append(Optional.ofNullable(this.color).orElse(this.getParentColor()).toAsciiCode());
+            builder
+                .append(e.toAnsi())
+                .style(Optional.ofNullable(this.color)
+                    .or(() -> Optional.of(this.getParentColor()))
+                    .map(c -> new AttributedStyle().foregroundRgb(c.getColor().getRGB()))
+                    .orElse(new AttributedStyle())
+            );
         }
-        return extra.append(this.getParentColor().toAsciiCode()).toString();
+
+        return builder.style(style).toAnsi();
     }
 
     @NotNull

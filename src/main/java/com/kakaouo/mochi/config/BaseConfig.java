@@ -53,10 +53,13 @@ public abstract class BaseConfig<T> {
 
             var lines = 0;
             var skipLines = getSkipLineCount();
+
             while (true) {
                 if (lines >= skipLines) break;
 
                 var r = reader.read();
+                if (r == -1) break;
+
                 if ((char) r == '\n') {
                     lines++;
                 }
