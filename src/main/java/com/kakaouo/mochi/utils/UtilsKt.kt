@@ -76,34 +76,4 @@ object UtilsKt {
             throw err!!
         }
     }
-
-    suspend fun <T> CompletableFuture<T>.await(): T? {
-        var completed = false
-        var faulted = false
-        var result: T? = null
-        var err: Throwable? = null
-
-        this.whenComplete { v, e ->
-            faulted = e != null
-            err = e
-            result = v
-
-            // Should be placed at the last :P...
-            completed = true
-        }
-
-        while (!completed) {
-            delay(16)
-            yield()
-        }
-
-        if (faulted) {
-            throw err!!
-        }
-
-        if (result == null) {
-            Logger.warn("Result is null!")
-        }
-        return result
-    }
 }
