@@ -61,12 +61,6 @@ public enum BrigadierTerminal {
                 var context = result.getContext();
                 var sb = new StringBuilder();
 
-                if (reader.canRead()) {
-                    if (context.getRange().isEmpty()) {
-                        writeWithSuggestion(LiteralText.of(buffer).setColor(TextColor.RED), sb);
-                    }
-                }
-
                 ParsedCommandNode<T> lastProcessedNode = null;
                 var started = false;
                 var startFrom = 0;
@@ -135,7 +129,7 @@ public enum BrigadierTerminal {
                 }
 
                 if (lastProcessedNode != null && lastProcessedNode.getNode().getCommand() == null) {
-                    sb.append(LiteralText.of(" <- Incomplete command").setColor(TextColor.RED).toAnsi());
+                    writeError(" <- Incomplete command", sb);
                 }
 
                 return AttributedString.fromAnsi(sb.toString());

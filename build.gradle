@@ -8,7 +8,7 @@ plugins {
 }
 
 group 'com.kakaouo'
-version '1.0-build.39'
+version '1.0-build.40'
 
 repositories {
     mavenCentral()
