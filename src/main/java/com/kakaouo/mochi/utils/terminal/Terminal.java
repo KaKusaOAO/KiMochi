@@ -42,7 +42,11 @@ public enum Terminal {
             if (reader != null) {
                 reader.printAbove(text);
             } else {
-                terminal.writer().println(text);
+                var writer = terminal.writer();
+                writer.println(text);
+
+                // Always flushing after writing a new line
+                writer.flush();
             }
         } catch (InterruptedException e) {
             //

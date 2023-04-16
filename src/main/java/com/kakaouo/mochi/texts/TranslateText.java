@@ -52,12 +52,22 @@ public class TranslateText extends Text<TranslateText> {
 
         try {
             while (matcher.find()) {
+                var startIndex = matcher.start();
+                var endIndex = matcher.end();
+
                 // Add the previous text to converted text
-                String prev = translate.substring(start, matcher.start());
+                String prev = translate.substring(start, startIndex);
                 var tempLiteral = LiteralText.of(prev).setColor(getColor());
                 literals.add(tempLiteral);
                 converted.add(tempLiteral);
-                start = matcher.end();
+                start = endIndex;
+
+                if (startIndex >= 1 && translate.charAt(startIndex - 1) == '%') {
+                    // The entry is considered escaped.
+                    // Reduce `start` by one so the format character (the s in %s) in included
+                    start -= endIndex - startIndex - 1;
+                    continue;
+                }
 
                 int index;
                 String indexStr = matcher.group(1);
@@ -67,7 +77,13 @@ public class TranslateText extends Text<TranslateText> {
                     index = counter++;
                 }
 
-                converted.add(with.get(index));
+                if (index >= 0 && index < with.size()) {
+                    converted.add(with.get(index));
+                } else {
+                    converted.add(LiteralText.of(
+                            translate.substring(startIndex, endIndex)
+                    ));
+                }
             }
 
             var end = LiteralText.of(translate.substring(start))
